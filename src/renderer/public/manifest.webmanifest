@@ -1,0 +1,17 @@
+{
+  "name": "Webstream",
+  "short_name": "Webstream",
+  "description": "Phone camera and audio streaming over WebRTC",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0e0d0a",
+  "theme_color": "#15140f",
+  "categories": ["utilities", "photo", "video"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-1024.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

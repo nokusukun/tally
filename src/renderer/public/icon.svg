@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#15140f"/>
+
+  <g stroke="#3a3833" stroke-width="5" stroke-linecap="square" fill="none">
+    <path d="M 180 100 L 180 180 M 100 180 L 180 180"/>
+    <path d="M 844 100 L 844 180 M 924 180 L 844 180"/>
+    <path d="M 180 924 L 180 844 M 100 844 L 180 844"/>
+    <path d="M 844 924 L 844 844 M 924 844 L 844 844"/>
+  </g>
+
+  <g transform="translate(512 512) rotate(45)">
+    <rect x="-180" y="-180" width="360" height="360" rx="18" fill="#d99e4a"/>
+    <rect x="-180" y="-180" width="360" height="360" rx="18" fill="none" stroke="#9d6e1f" stroke-width="6"/>
+  </g>
+</svg>

@@ -1,0 +1,9 @@
+* text=auto eol=lf
+
+# Treat installer / binary outputs as binary
+*.png binary
+*.ico binary
+*.icns binary
+*.dmg binary
+*.exe binary
+*.AppImage binary

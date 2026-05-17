@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+  <meta name="theme-color" content="#15140f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tally">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+  <title>Tally</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <header class="titlebar" id="titlebar" aria-hidden="true">
+    <div class="titlebar-drag">
+      <span class="wordmark">
+        <span class="dot" aria-hidden="true"></span>
+        <span>TALLY</span>
+      </span>
+    </div>
+    <div class="titlebar-controls" id="titlebar-controls">
+      <button class="winctrl" data-action="minimize" title="Minimize" aria-label="Minimize">
+        <svg viewBox="0 0 10 10" width="10" height="10"><path d="M2 5h6" stroke="currentColor" stroke-width="1" stroke-linecap="square" fill="none"/></svg>
+      </button>
+      <button class="winctrl" data-action="toggle-maximize" title="Maximize" aria-label="Maximize">
+        <svg viewBox="0 0 10 10" width="10" height="10"><rect x="2" y="2" width="6" height="6" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+      </button>
+      <button class="winctrl close" data-action="close" title="Close" aria-label="Close">
+        <svg viewBox="0 0 10 10" width="10" height="10"><path d="M2 2l6 6 M8 2l-6 6" stroke="currentColor" stroke-width="1" stroke-linecap="square" fill="none"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="app" data-mode="loading" aria-live="polite">
+
+    <!-- LOADING / INITIAL -->
+    <section class="screen" data-screen="loading">
+      <div class="loading-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="32" height="32"><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+      </div>
+    </section>
+
+    <!-- VIEWER: PAIRING -->
+    <section class="screen pairing" data-screen="pairing" hidden>
+      <header class="topbar">
+        <div class="wordmark">
+          <span class="dot" aria-hidden="true"></span>
+          <span>TALLY</span>
+        </div>
+        <span class="status" data-state="waiting">
+          <span class="status-dot"></span>
+          <span>WAITING FOR DEVICE</span>
+        </span>
+      </header>
+
+      <aside class="pending-banner" id="pending-banner" hidden>
+        <div class="pending-row">
+          <span class="caplabel">PENDING SESSION</span>
+          <span class="pending-code" id="pending-code">—</span>
+          <span class="pending-meta caplabel" id="pending-meta">sender is waiting</span>
+        </div>
+        <div class="pending-actions">
+          <button class="pending-reconnect" id="pending-reconnect">RECONNECT</button>
+          <button class="iconbtn ghost" id="pending-dismiss" aria-label="Dismiss">
+            <svg viewBox="0 0 24 24" width="14" height="14"><path d="M6 6l12 12 M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </aside>
+
+      <div class="pairing-stage">
+        <div class="qr-frame">
+          <span class="reg reg-tl" aria-hidden="true"></span>
+          <span class="reg reg-tr" aria-hidden="true"></span>
+          <span class="reg reg-bl" aria-hidden="true"></span>
+          <span class="reg reg-br" aria-hidden="true"></span>
+          <img id="qr" class="qr" alt="Pairing QR code" width="320" height="320">
+        </div>
+
+        <div class="pair-meta">
+          <div class="caplabel">SCAN WITH PHONE CAMERA</div>
+          <div class="paircode" id="paircode" aria-label="Pair code"></div>
+          <div class="pair-hint" id="pairhint">or open the URL below on your phone</div>
+          <div class="pair-url" id="pairurl"></div>
+        </div>
+      </div>
+
+      <footer class="botbar pairing-bar">
+        <span class="caplabel" id="bot-network">LAN</span>
+        <button class="tunnel-toggle" id="tunnel-toggle" hidden aria-label="Open public tunnel">
+          <span class="tunnel-dot" aria-hidden="true"></span>
+          <span class="caplabel" id="tunnel-label">OPEN PUBLIC TUNNEL</span>
+        </button>
+        <span class="caplabel" id="bot-version">v0.2</span>
+      </footer>
+    </section>
+
+    <!-- VIEWER: LIVE -->
+    <section class="screen viewer" data-screen="viewer" hidden>
+      <video id="stream" autoplay playsinline></video>
+
+      <span class="reg reg-tl viewer-reg" aria-hidden="true"></span>
+      <span class="reg reg-tr viewer-reg" aria-hidden="true"></span>
+      <span class="reg reg-bl viewer-reg" aria-hidden="true"></span>
+      <span class="reg reg-br viewer-reg" aria-hidden="true"></span>
+
+      <header class="topbar floating">
+        <div class="wordmark">
+          <span class="dot" aria-hidden="true"></span>
+          <span>TALLY</span>
+        </div>
+        <span class="status" id="viewer-status" data-state="connected">
+          <span class="status-dot rec"></span>
+          <span>LIVE</span>
+        </span>
+      </header>
+
+      <div class="sheet-backdrop" id="v-sheet-backdrop" hidden></div>
+
+      <aside class="sheet" id="v-sheet" hidden aria-label="Remote camera settings">
+        <header class="sheet-head">
+          <span class="caplabel">REMOTE CAMERA</span>
+          <button class="iconbtn ghost" id="v-sheet-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 6l12 12 M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+        </header>
+        <div class="sheet-body">
+          <div class="field">
+            <label class="caplabel">FACING</label>
+            <div class="seg" id="vc-facing" role="radiogroup">
+              <button data-val="environment" class="on" aria-checked="true">BACK</button>
+              <button data-val="user" aria-checked="false">FRONT</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="caplabel">RESOLUTION</label>
+            <div class="seg" id="vc-res" role="radiogroup">
+              <button data-val="360">360</button>
+              <button data-val="480">480</button>
+              <button data-val="720" class="on" aria-checked="true">720</button>
+              <button data-val="1080">1080</button>
+              <button data-val="2160">4K</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="caplabel">FRAME RATE</label>
+            <div class="seg" id="vc-fps" role="radiogroup">
+              <button data-val="15">15</button>
+              <button data-val="24">24</button>
+              <button data-val="30" class="on" aria-checked="true">30</button>
+              <button data-val="60">60</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="caplabel">MAX BITRATE</label>
+            <div class="seg" id="vc-bitrate" role="radiogroup">
+              <button data-val="0">AUTO</button>
+              <button data-val="1500" class="on" aria-checked="true">1.5M</button>
+              <button data-val="3000">3M</button>
+              <button data-val="6000">6M</button>
+              <button data-val="12000">12M</button>
+            </div>
+          </div>
+          <div class="field row">
+            <label class="caplabel" for="vc-audio">AUDIO</label>
+            <label class="switch">
+              <input type="checkbox" id="vc-audio" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <p class="sheet-hint caplabel">CHANGES APPLY ON THE SENDER DEVICE</p>
+        </div>
+      </aside>
+
+      <footer class="botbar floating viewer-bar">
+        <div class="readout">
+          <span class="r-item"><em class="caplabel">RES</em><span id="v-res">—</span></span>
+          <span class="r-item"><em class="caplabel">FPS</em><span id="v-fps">—</span></span>
+          <span class="r-item"><em class="caplabel">RATE</em><span id="v-bitrate">—</span></span>
+          <span class="r-item"><em class="caplabel">DROP</em><span id="v-drop">—</span></span>
+        </div>
+        <div class="actions">
+          <button id="v-control" class="iconbtn" title="Camera settings" aria-label="Remote camera settings">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 7h11 M4 12h16 M4 17h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="17" cy="7" r="2" fill="currentColor"/><circle cx="11" cy="17" r="2" fill="currentColor"/></svg>
+          </button>
+          <button id="v-capture" class="iconbtn" title="Toggle OBS capture window (Ctrl+Shift+C)" aria-label="Toggle capture window" hidden>
+            <svg viewBox="0 0 24 24" width="18" height="18"><rect x="3" y="3" width="14" height="14" rx="1.5" stroke="currentColor" stroke-width="1.6" fill="none"/><rect x="8" y="8" width="13" height="13" rx="1.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
+          </button>
+          <button id="v-mute" class="iconbtn" title="Unmute (M)" aria-label="Unmute">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M5 9v6h4l5 4V5L9 9H5zm14.5 3a4.5 4.5 0 0 0-2.6-4.1l-.9 1.6a2.7 2.7 0 0 1 0 5l.9 1.6A4.5 4.5 0 0 0 19.5 12z M4 4l16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button id="v-fullscreen" class="iconbtn" title="Fullscreen (F)" aria-label="Fullscreen">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 9V4h5 M20 9V4h-5 M4 15v5h5 M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+          <button id="v-newroom" class="iconbtn" title="New session" aria-label="New session">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M3 12a9 9 0 1 0 3-6.7 M3 4v5h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </footer>
+    </section>
+
+    <!-- SENDER: INTRO (tap-to-arm) -->
+    <section class="screen sender-intro" data-screen="sender-intro" hidden>
+      <div class="intro-stage">
+        <div class="intro-mark">
+          <svg viewBox="0 0 64 64" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.4">
+            <rect x="6" y="14" width="52" height="38" rx="3"/>
+            <circle cx="32" cy="33" r="12"/>
+            <circle cx="32" cy="33" r="6"/>
+            <rect x="22" y="8" width="20" height="8" rx="2"/>
+            <circle cx="50" cy="20" r="1.5" fill="currentColor"/>
+          </svg>
+        </div>
+        <h1 class="intro-title">PAIRED <span id="intro-code"></span></h1>
+        <p class="intro-sub">Ready to stream from this device.</p>
+        <button id="arm" class="primary chunky">
+          <span>ARM CAMERA</span>
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 12h14m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <p class="intro-foot caplabel">CAMERA + MIC ACCESS REQUIRED</p>
+      </div>
+    </section>
+
+    <!-- SENDER: LIVE -->
+    <section class="screen sender" data-screen="sender" hidden>
+      <video id="preview" autoplay muted playsinline></video>
+
+      <span class="reg reg-tl viewer-reg" aria-hidden="true"></span>
+      <span class="reg reg-tr viewer-reg" aria-hidden="true"></span>
+      <span class="reg reg-bl viewer-reg" aria-hidden="true"></span>
+      <span class="reg reg-br viewer-reg" aria-hidden="true"></span>
+
+      <header class="topbar floating">
+        <div class="wordmark">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="sender-room">—</span>
+        </div>
+        <span class="status" id="sender-status" data-state="connected">
+          <span class="status-dot rec"></span>
+          <span>BROADCAST</span>
+        </span>
+      </header>
+
+      <footer class="botbar floating sender-bar">
+        <div class="readout small">
+          <span class="r-item"><em class="caplabel">RES</em><span id="s-res">—</span></span>
+          <span class="r-item"><em class="caplabel">FPS</em><span id="s-fps">—</span></span>
+          <span class="r-item"><em class="caplabel">RATE</em><span id="s-bitrate">—</span></span>
+        </div>
+        <div class="actions">
+          <button id="s-flip" class="iconbtn" title="Flip camera" aria-label="Flip camera">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M3 11a8 8 0 0 1 14-5l2-2v6h-6l2-2a6 6 0 0 0-10 3 M21 13a8 8 0 0 1-14 5l-2 2v-6h6l-2 2a6 6 0 0 0 10-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button id="s-idle" class="iconbtn" title="Idle (dim screen, keep streaming)" aria-label="Idle mode">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button id="s-torch" class="iconbtn" title="Torch" aria-label="Torch" hidden>
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 3h10l-2 6h3l-9 12 2-8H7l2-10z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          </button>
+          <button id="s-settings" class="iconbtn" title="Settings" aria-label="Settings">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 7h11 M4 12h16 M4 17h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="17" cy="7" r="2" fill="currentColor"/><circle cx="11" cy="17" r="2" fill="currentColor"/></svg>
+          </button>
+          <button id="s-stop" class="stopbtn" title="Stop" aria-label="Stop streaming">
+            <svg viewBox="0 0 24 24" width="14" height="14"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg>
+            <span>STOP</span>
+          </button>
+        </div>
+      </footer>
+
+      <div class="idle-overlay" id="idle-overlay" hidden role="button" tabindex="0" aria-label="Tap to wake">
+        <div class="idle-indicator">
+          <span class="idle-rec" aria-hidden="true"></span>
+          <span class="idle-label">STREAMING</span>
+        </div>
+        <div class="idle-tap caplabel">TAP ANYWHERE TO WAKE</div>
+      </div>
+
+      <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
+
+      <!-- Bottom sheet: advanced options -->
+      <aside class="sheet" id="sheet" hidden aria-label="Stream settings">
+        <header class="sheet-head">
+          <span class="caplabel">STREAM SETTINGS</span>
+          <button class="iconbtn ghost" id="sheet-close" aria-label="Close settings">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 6l12 12 M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+        </header>
+        <div class="sheet-body">
+          <div class="field">
+            <label class="caplabel">LAYOUT</label>
+            <div class="seg" id="cfg-layout" role="radiogroup" aria-label="Layout">
+              <button data-val="default" role="radio" aria-checked="true" class="on">DEFAULT</button>
+              <button data-val="operator" role="radio" aria-checked="false">OPERATOR</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="caplabel" for="cfg-camera">CAMERA</label>
+            <select id="cfg-camera"></select>
+          </div>
+          <div class="field">
+            <label class="caplabel" for="cfg-mic">MICROPHONE</label>
+            <select id="cfg-mic"></select>
+          </div>
+          <div class="field">
+            <label class="caplabel" for="cfg-res">RESOLUTION</label>
+            <div class="seg" id="cfg-res" role="radiogroup" aria-label="Resolution">
+              <button data-val="360" role="radio">360</button>
+              <button data-val="480" role="radio">480</button>
+              <button data-val="720" role="radio" aria-checked="true" class="on">720</button>
+              <button data-val="1080" role="radio">1080</button>
+              <button data-val="2160" role="radio">4K</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="caplabel" for="cfg-fps">FRAME RATE</label>
+            <div class="seg" id="cfg-fps" role="radiogroup" aria-label="Frame rate">
+              <button data-val="15" role="radio">15</button>
+              <button data-val="24" role="radio">24</button>
+              <button data-val="30" role="radio" aria-checked="true" class="on">30</button>
+              <button data-val="60" role="radio">60</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="caplabel" for="cfg-bitrate">MAX BITRATE</label>
+            <div class="seg" id="cfg-bitrate" role="radiogroup" aria-label="Max bitrate">
+              <button data-val="0" role="radio">AUTO</button>
+              <button data-val="1500" role="radio" aria-checked="true" class="on">1.5M</button>
+              <button data-val="3000" role="radio">3M</button>
+              <button data-val="6000" role="radio">6M</button>
+              <button data-val="12000" role="radio">12M</button>
+            </div>
+          </div>
+          <div class="field row">
+            <label class="caplabel" for="cfg-audio">AUDIO</label>
+            <label class="switch">
+              <input type="checkbox" id="cfg-audio" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </aside>
+
+      <aside class="operator" id="operator" aria-label="Operator panel">
+        <header class="operator-head">
+          <span class="caplabel">STREAM CONTROL</span>
+          <button class="iconbtn ghost" id="operator-exit" aria-label="Exit operator mode">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 6l12 12 M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+        </header>
+
+        <div class="operator-grid">
+          <button class="op-tile" data-op="res" aria-label="Resolution, tap to cycle">
+            <span class="op-tile-label">RESOLUTION</span>
+            <span class="op-tile-value" id="op-val-res">720</span>
+            <span class="op-tile-unit" id="op-unit-res">HD</span>
+          </button>
+          <button class="op-tile" data-op="fps" aria-label="Frame rate, tap to cycle">
+            <span class="op-tile-label">FRAME RATE</span>
+            <span class="op-tile-value" id="op-val-fps">30</span>
+            <span class="op-tile-unit">FPS</span>
+          </button>
+          <button class="op-tile" data-op="bitrate" aria-label="Bitrate, tap to cycle">
+            <span class="op-tile-label">BITRATE</span>
+            <span class="op-tile-value" id="op-val-bitrate">1.5</span>
+            <span class="op-tile-unit" id="op-unit-bitrate">Mb/s</span>
+          </button>
+          <button class="op-tile" data-op="audio" aria-label="Audio, tap to toggle">
+            <span class="op-tile-label">AUDIO</span>
+            <span class="op-tile-value" id="op-val-audio">ON</span>
+            <span class="op-tile-unit">MIC</span>
+          </button>
+          <button class="op-tile op-icon" data-op="flip" aria-label="Flip camera">
+            <svg viewBox="0 0 24 24" width="28" height="28"><path d="M3 11a8 8 0 0 1 14-5l2-2v6h-6l2-2a6 6 0 0 0-10 3 M21 13a8 8 0 0 1-14 5l-2 2v-6h6l-2 2a6 6 0 0 0 10-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="op-tile-value">FLIP</span>
+          </button>
+          <button class="op-tile op-icon" data-op="idle" aria-label="Idle mode">
+            <svg viewBox="0 0 24 24" width="28" height="28"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="op-tile-value">IDLE</span>
+          </button>
+        </div>
+
+        <button class="op-stop" data-op="stop" aria-label="Stop streaming">
+          <svg viewBox="0 0 24 24" width="16" height="16"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg>
+          <span>STOP STREAMING</span>
+        </button>
+      </aside>
+    </section>
+
+    <!-- CAPTURE: chromeless video for OBS / window capture -->
+    <section class="screen capture" data-screen="capture" hidden>
+      <video id="capture-stream" autoplay playsinline></video>
+      <div class="capture-placeholder">
+        <div class="caplabel">WAITING FOR STREAM</div>
+      </div>
+    </section>
+
+    <!-- ERROR / NO-PEER -->
+    <section class="screen error" data-screen="error" hidden>
+      <div class="error-stage">
+        <div class="caplabel">ERROR</div>
+        <p id="error-msg">Something went wrong.</p>
+        <button class="primary" id="err-retry">RETRY</button>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

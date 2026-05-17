@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+
+# runtime / dev artifacts
+certs/
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# build / release output
+release/
+dist/
+out/
+
+# electron-builder reads build/icon.png at build time; CI regenerates it
+# from public/icon.svg via `npm run icons`, so we don't commit the binary.
+build/icon.png
+
+# editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
