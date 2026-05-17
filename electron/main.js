@@ -243,24 +243,25 @@ async function openCaptureWindow() {
   }
 }
 
-async function resolveCloudflaredBin() {
-  // The `cloudflared` npm package downloads the binary on install.
-  // Its location varies; we try the documented helper first.
-  try {
-    const cf = require('cloudflared');
-    if (cf.bin && typeof cf.bin === 'string') return cf.bin;
-  } catch {}
-  try {
-    const cfBin = require('cloudflared/path').default;
-    if (cfBin) return cfBin;
-  } catch {}
-  // Fallback: rely on PATH
-  return 'cloudflared';
+function resolveCloudflaredBin() {
+  // The `cloudflared` npm package downloads the binary on install and
+  // exposes its absolute path as `require('cloudflared').bin`.
+  let bin;
+  try { bin = require('cloudflared').bin; } catch {}
+  if (!bin || typeof bin !== 'string') return 'cloudflared';
+
+  // In a packaged Electron app, require() resolves inside app.asar — a
+  // virtual filesystem that spawn() cannot execute from. asarUnpack puts
+  // the real binary alongside, in app.asar.unpacked.
+  if (bin.includes(`app.asar${path.sep}`) && !bin.includes('app.asar.unpacked')) {
+    bin = bin.replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`);
+  }
+  return bin;
 }
 
 async function startTunnel() {
   if (tunnelProcess) return { url: tunnelUrl };
-  const bin = await resolveCloudflaredBin();
+  const bin = resolveCloudflaredBin();
   const args = [
     'tunnel',
     '--no-autoupdate',
