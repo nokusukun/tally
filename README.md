@@ -94,4 +94,4 @@ server.js      CLI entry to run the signaling server standalone
 
 ## License
 
-[MIT](LICENSE)
+[GPL-2.0](LICENSE)
